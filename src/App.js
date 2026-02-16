@@ -27,16 +27,17 @@ function App() {
   };
 
   // Get today's date string for localStorage key
-  const getTodayKey = () => {
-    const today = new Date();
-    return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-  };
+  // Get today's date string for localStorage key (UTC-based)
+const getTodayKey = () => {
+  const today = new Date();
+  return `${today.getUTCFullYear()}-${today.getUTCMonth() + 1}-${today.getUTCDate()}`;
+};
 
-  const getYesterdayKey = () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    return `${yesterday.getFullYear()}-${yesterday.getMonth() + 1}-${yesterday.getDate()}`;
-  };
+const getYesterdayKey = () => {
+  const yesterday = new Date();
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  return `${yesterday.getUTCFullYear()}-${yesterday.getUTCMonth() + 1}-${yesterday.getUTCDate()}`;
+};
 
   const updateStreak = (won) => {
     const currentStreak = parseInt(localStorage.getItem('streak') || '0');
