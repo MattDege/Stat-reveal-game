@@ -22,23 +22,24 @@ function App() {
   const [showGiveUpModal, setShowGiveUpModal] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
 
-  // Get today's date string for localStorage key (UTC-based)
+  // Convert any date to ET
   const getETDate = (date) => {
-  const etOffset = -5; // -4 during daylight saving
-  return new Date(date.getTime() + (etOffset * 60 * 60 * 1000));
-};
+    const etOffset = -5; // -4 during daylight saving
+    return new Date(date.getTime() + (etOffset * 60 * 60 * 1000));
+  };
 
-const getTodayKey = () => {
-  const etDate = getETDate(new Date());
-  return `${etDate.getUTCFullYear()}-${etDate.getUTCMonth() + 1}-${etDate.getUTCDate()}`;
-};
+  // Get today's date string for localStorage key (ET-based)
+  const getTodayKey = () => {
+    const etDate = getETDate(new Date());
+    return `${etDate.getUTCFullYear()}-${etDate.getUTCMonth() + 1}-${etDate.getUTCDate()}`;
+  };
 
-const getYesterdayKey = () => {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const etDate = getETDate(yesterday);
-  return `${etDate.getUTCFullYear()}-${etDate.getUTCMonth() + 1}-${etDate.getUTCDate()}`;
-};
+  const getYesterdayKey = () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const etDate = getETDate(yesterday);
+    return `${etDate.getUTCFullYear()}-${etDate.getUTCMonth() + 1}-${etDate.getUTCDate()}`;
+  };
 
   const updateStreak = (won) => {
     const currentStreak = parseInt(localStorage.getItem('streak') || '0');
@@ -145,7 +146,6 @@ const getYesterdayKey = () => {
       setGameComplete(true);
       updateStreak(true);
       
-      // Save to localStorage
       const todayKey = getTodayKey();
       localStorage.setItem(`game_${todayKey}`, JSON.stringify({
         won: true,
@@ -159,13 +159,11 @@ const getYesterdayKey = () => {
       const newGuesses = [...guesses, playerName];
       setGuesses(newGuesses);
       
-      // Auto-reveal after 10 wrong guesses
       if (newGuesses.length >= 10) {
         setGameWon(false);
         setGameComplete(true);
         updateStreak(false);
         
-        // Save to localStorage
         const todayKey = getTodayKey();
         localStorage.setItem(`game_${todayKey}`, JSON.stringify({
           won: false,
@@ -185,7 +183,6 @@ const getYesterdayKey = () => {
 
   const handleUseHint = () => {
     if (hintsRemaining <= 0 || gameComplete || currentClue >= 9) return;
-    
     setCurrentClue(currentClue + 1);
     setHintsRemaining(hintsRemaining - 1);
   };
@@ -226,9 +223,10 @@ const getYesterdayKey = () => {
   };
 
   const handleShare = () => {
-    const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    const etNow = getETDate(new Date());
+    const etStart = new Date(Date.UTC(etNow.getUTCFullYear(), 0, 0));
+    const dayOfYear = Math.floor((etNow - etStart) / (1000 * 60 * 60 * 24));
     const emoji = gameWon ? '🟩' : '🟥';
-    const wrongGuesses = '⬜'.repeat(guesses.length);
     const totalGuesses = gameWon ? guesses.length : 10;
     const hintsUsed = 2 - hintsRemaining;
     
@@ -236,7 +234,7 @@ const getYesterdayKey = () => {
 Day ${dayOfYear} | Streak: ${streak} 🔥
 
 ${gameWon ? `✅ Solved in ${totalGuesses}/10` : '❌ Failed'}
-${emoji}${wrongGuesses}${'⬜'.repeat(10 - guesses.length - 1)}
+${emoji}${'⬜'.repeat(guesses.length)}${'⬜'.repeat(Math.max(0, 10 - guesses.length - 1))}
 ${hintsUsed > 0 ? `💡 Hints used: ${hintsUsed}` : ''}
 
 Play at: ${window.location.href}`;
@@ -309,7 +307,6 @@ Play at: ${window.location.href}`;
 
         {/* CLUE GRID - 12 TOTAL CLUES */}
         <div className="clue-grid">
-          {/* Always visible - 4 clues */}
           <div className="clue-card">
             <div className="clue-label">Year</div>
             <div className="clue-value">{mysteryPlayer.year}</div>
@@ -330,7 +327,6 @@ Play at: ${window.location.href}`;
             <div className="clue-value">{mysteryPlayer.homeRuns} HR</div>
           </div>
 
-          {/* Progressive reveals - 8 more clues */}
           {currentClue >= 2 && (
             <div className="clue-card revealed">
               <div className="clue-label">League</div>
@@ -425,7 +421,6 @@ Play at: ${window.location.href}`;
               </button>
             </div>
 
-            {/* HINT SYSTEM */}
             <div className="hint-section">
               <div className="hint-counter">
                 💡 Hints: {hintsRemaining} remaining
