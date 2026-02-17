@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import { fetchAllPlayers, getDailyPlayer, getUniquePlayerNames, checkGuess } from './mlbApi';
 
@@ -41,6 +41,16 @@ function App() {
     return `${etDate.getUTCFullYear()}-${etDate.getUTCMonth() + 1}-${etDate.getUTCDate()}`;
   };
 
+  // Clean up old localStorage keys from UTC era
+  const cleanOldKeys = () => {
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+      if (key.startsWith('game_')) {
+        localStorage.removeItem(key);
+      }
+    });
+  };
+
   const updateStreak = (won) => {
     const currentStreak = parseInt(localStorage.getItem('streak') || '0');
     const lastPlayedDate = localStorage.getItem('lastPlayedDate');
@@ -70,6 +80,13 @@ function App() {
   useEffect(() => {
     const loadPlayers = async () => {
       setLoading(true);
+
+      // Clean up old UTC-based keys once per user
+      if (!localStorage.getItem('cleanedV2')) {
+        cleanOldKeys();
+        localStorage.setItem('cleanedV2', 'true');
+      }
+
       const players = await fetchAllPlayers();
       setAllPlayers(players);
       
@@ -138,7 +155,6 @@ function App() {
 
     setDuplicateError(false);
 
-    // Check if guess matches the mystery player's season
     const isCorrect = checkGuess(playerName, mysteryPlayer, allPlayers);
 
     if (isCorrect) {

@@ -22,12 +22,6 @@ const getETDate = (date) => {
 export const getDailyPlayer = (players) => {
   if (!players || players.length === 0) return null;
 
-  // TEMPORARY OVERRIDE: Force Aaron Judge 2017 (remove tomorrow!)
-  const aaronJudge2017 = players.find(p => 
-    p.name === "Aaron Judge" && p.year === 2017
-  );
-  if (aaronJudge2017) return aaronJudge2017;
-
   // Get current ET date
   const etNow = getETDate(new Date());
   const etYear = etNow.getUTCFullYear();
