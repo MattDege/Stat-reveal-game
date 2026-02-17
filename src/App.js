@@ -2,6 +2,37 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import { fetchAllPlayers, getDailyPlayer, getUniquePlayerNames, checkGuess } from './mlbApi';
 
+// ET date utilities - outside component to avoid dependency issues
+const getETDate = (date) => {
+  const jan = new Date(date.getFullYear(), 0, 1);
+  const jul = new Date(date.getFullYear(), 6, 1);
+  const stdOffset = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+  const isDST = date.getTimezoneOffset() < stdOffset;
+  const etOffset = isDST ? -4 : -5;
+  return new Date(date.getTime() + (etOffset * 60 * 60 * 1000));
+};
+
+const getTodayKey = () => {
+  const etDate = getETDate(new Date());
+  return `${etDate.getUTCFullYear()}-${etDate.getUTCMonth() + 1}-${etDate.getUTCDate()}`;
+};
+
+const getYesterdayKey = () => {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const etDate = getETDate(yesterday);
+  return `${etDate.getUTCFullYear()}-${etDate.getUTCMonth() + 1}-${etDate.getUTCDate()}`;
+};
+
+const cleanOldKeys = () => {
+  const keys = Object.keys(localStorage);
+  keys.forEach(key => {
+    if (key.startsWith('game_')) {
+      localStorage.removeItem(key);
+    }
+  });
+};
+
 function App() {
   const [allPlayers, setAllPlayers] = useState([]);
   const [uniqueNames, setUniqueNames] = useState([]);
@@ -21,35 +52,6 @@ function App() {
   const [duplicateError, setDuplicateError] = useState(false);
   const [showGiveUpModal, setShowGiveUpModal] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
-
-  // Convert any date to ET
-  const getETDate = (date) => {
-    const etOffset = -5; // -4 during daylight saving
-    return new Date(date.getTime() + (etOffset * 60 * 60 * 1000));
-  };
-
-  // Get today's date string for localStorage key (ET-based)
-  const getTodayKey = () => {
-    const etDate = getETDate(new Date());
-    return `${etDate.getUTCFullYear()}-${etDate.getUTCMonth() + 1}-${etDate.getUTCDate()}`;
-  };
-
-  const getYesterdayKey = () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const etDate = getETDate(yesterday);
-    return `${etDate.getUTCFullYear()}-${etDate.getUTCMonth() + 1}-${etDate.getUTCDate()}`;
-  };
-
-  // Clean up old localStorage keys from UTC era
-  const cleanOldKeys = () => {
-    const keys = Object.keys(localStorage);
-    keys.forEach(key => {
-      if (key.startsWith('game_')) {
-        localStorage.removeItem(key);
-      }
-    });
-  };
 
   const updateStreak = (won) => {
     const currentStreak = parseInt(localStorage.getItem('streak') || '0');
@@ -96,11 +98,9 @@ function App() {
       const todaysPlayer = getDailyPlayer(players);
       setMysteryPlayer(todaysPlayer);
       
-      // Load current streak
       const currentStreak = parseInt(localStorage.getItem('streak') || '0');
       setStreak(currentStreak);
       
-      // Check if already played today
       const todayKey = getTodayKey();
       const savedGame = localStorage.getItem(`game_${todayKey}`);
       
@@ -117,7 +117,7 @@ function App() {
     };
     
     loadPlayers();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Show How to Play on first visit
   useEffect(() => {
@@ -158,6 +158,8 @@ function App() {
     const isCorrect = checkGuess(playerName, mysteryPlayer, allPlayers);
 
     if (isCorrect) {
+      const winningGuesses = [...guesses, playerName];
+      setGuesses(winningGuesses);
       setGameWon(true);
       setGameComplete(true);
       updateStreak(true);
@@ -165,7 +167,7 @@ function App() {
       const todayKey = getTodayKey();
       localStorage.setItem(`game_${todayKey}`, JSON.stringify({
         won: true,
-        guesses: guesses,
+        guesses: winningGuesses,
         currentClue: currentClue,
         hintsRemaining: hintsRemaining,
         completed: true
@@ -243,14 +245,13 @@ function App() {
     const etStart = new Date(Date.UTC(etNow.getUTCFullYear(), 0, 0));
     const dayOfYear = Math.floor((etNow - etStart) / (1000 * 60 * 60 * 24));
     const emoji = gameWon ? '🟩' : '🟥';
-    const totalGuesses = gameWon ? guesses.length : 10;
     const hintsUsed = 2 - hintsRemaining;
-    
+
     const shareText = `⚾ Stat Reveal Game
 Day ${dayOfYear} | Streak: ${streak} 🔥
 
-${gameWon ? `✅ Solved in ${totalGuesses}/10` : '❌ Failed'}
-${emoji}${'⬜'.repeat(guesses.length)}${'⬜'.repeat(Math.max(0, 10 - guesses.length - 1))}
+${gameWon ? `✅ Solved in ${guesses.length}/10` : '❌ Failed'}
+${emoji}${'⬜'.repeat(Math.max(0, guesses.length - 1))}${'⬜'.repeat(Math.max(0, 9 - guesses.length))}
 ${hintsUsed > 0 ? `💡 Hints used: ${hintsUsed}` : ''}
 
 Play at: ${window.location.href}`;
@@ -309,9 +310,15 @@ Play at: ${window.location.href}`;
           </div>
         )}
 
-        {guesses.length > 0 && (
+        {guesses.length > 0 && !gameWon && (
           <div className="strikeout-counter">
             Wrong guesses ({guesses.length}/10): {guesses.map((g, i) => <span key={i}>⚾🚫 {g}</span>)}
+          </div>
+        )}
+
+        {guesses.length > 0 && gameWon && (
+          <div className="strikeout-counter">
+            Wrong guesses ({guesses.length - 1}/10): {guesses.slice(0, -1).map((g, i) => <span key={i}>⚾🚫 {g}</span>)}
           </div>
         )}
 
