@@ -18,6 +18,9 @@ function App() {
   const [gameWon, setGameWon] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [duplicateError, setDuplicateError] = useState(false);
+  const [showGiveUpModal, setShowGiveUpModal] = useState(false);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
 
   // Get today's date string for localStorage key (UTC-based)
   const getTodayKey = () => {
@@ -92,6 +95,15 @@ function App() {
     loadPlayers();
   }, []);
 
+  // Show How to Play on first visit
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('hasVisited');
+    if (!hasVisited) {
+      setShowHowToPlay(true);
+      localStorage.setItem('hasVisited', 'true');
+    }
+  }, []);
+
   // Filter players as user types
   useEffect(() => {
     if (inputValue.length > 0 && uniqueNames.length > 0) {
@@ -108,6 +120,16 @@ function App() {
 
   const handleGuess = (playerName = inputValue) => {
     if (!playerName || gameComplete || !mysteryPlayer) return;
+
+    // Check if already guessed this player
+    if (guesses.includes(playerName)) {
+      setDuplicateError(true);
+      setTimeout(() => setDuplicateError(false), 2000);
+      setInputValue('');
+      return;
+    }
+
+    setDuplicateError(false);
 
     // Check if guess matches the mystery player's season
     const isCorrect = checkGuess(playerName, mysteryPlayer, allPlayers);
@@ -174,13 +196,15 @@ function App() {
   };
 
   const handleForfeit = () => {
-    if (!window.confirm('Are you sure you want to give up?')) return;
-    
+    setShowGiveUpModal(true);
+  };
+
+  const confirmGiveUp = () => {
+    setShowGiveUpModal(false);
     setGameWon(false);
     setGameComplete(true);
     updateStreak(false);
     
-    // Save to localStorage
     const todayKey = getTodayKey();
     localStorage.setItem(`game_${todayKey}`, JSON.stringify({
       won: false,
@@ -189,6 +213,10 @@ function App() {
       hintsRemaining: hintsRemaining,
       completed: true
     }));
+  };
+
+  const cancelGiveUp = () => {
+    setShowGiveUpModal(false);
   };
 
   const handleShare = () => {
@@ -244,8 +272,13 @@ Play at: ${window.location.href}`;
     <div className="App">
       <header className="game-header">
         <h1>⚾ Stat Reveal Game</h1>
-        <div className="streak-counter">
-          Streak: ⚾ × {streak}
+        <div className="header-right">
+          <button className="how-to-button" onClick={() => setShowHowToPlay(true)}>
+            ?
+          </button>
+          <div className="streak-counter">
+            Streak: ⚾ × {streak}
+          </div>
         </div>
       </header>
 
@@ -259,6 +292,12 @@ Play at: ${window.location.href}`;
         {guesses.length > 0 && (
           <div className="strikeout-counter">
             Wrong guesses ({guesses.length}/10): {guesses.map((g, i) => <span key={i}>⚾🚫 {g}</span>)}
+          </div>
+        )}
+
+        {duplicateError && (
+          <div className="duplicate-error">
+            ⚠️ You already guessed this player!
           </div>
         )}
 
@@ -408,6 +447,70 @@ Play at: ${window.location.href}`;
                 📋 Share Result
               </button>
               <p className="next-game-text">Come back tomorrow for a new player!</p>
+            </div>
+          </div>
+        )}
+
+        {/* GIVE UP CONFIRMATION MODAL */}
+        {showGiveUpModal && (
+          <div className="modal-overlay" onClick={cancelGiveUp}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h3>Give Up?</h3>
+              <p>Are you sure you want to give up? This will end your streak and reveal the answer.</p>
+              <div className="modal-buttons">
+                <button onClick={confirmGiveUp} className="modal-button confirm">
+                  Yes, Give Up
+                </button>
+                <button onClick={cancelGiveUp} className="modal-button cancel">
+                  Keep Playing
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* HOW TO PLAY MODAL */}
+        {showHowToPlay && (
+          <div className="modal-overlay" onClick={() => setShowHowToPlay(false)}>
+            <div className="modal-content how-to-play" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setShowHowToPlay(false)}>×</button>
+              <h2>⚾ How to Play</h2>
+              
+              <div className="how-to-section">
+                <h3>🎯 Goal</h3>
+                <p>Guess the MLB player's season in 10 tries or less!</p>
+              </div>
+
+              <div className="how-to-section">
+                <h3>📊 Clues</h3>
+                <p>You start with 4 clues:</p>
+                <ul>
+                  <li><strong>Year</strong> - The season</li>
+                  <li><strong>Position Group</strong> - OF, INF, C, or DH</li>
+                  <li><strong>Batting Average</strong></li>
+                  <li><strong>Home Runs</strong></li>
+                </ul>
+                <p>Each wrong guess reveals a new clue!</p>
+              </div>
+
+              <div className="how-to-section">
+                <h3>💡 Hints</h3>
+                <p>You get <strong>2 hints</strong> per game. Use them to reveal the next clue without using a guess!</p>
+              </div>
+
+              <div className="how-to-section">
+                <h3>✅ Guessing</h3>
+                <p>Type the player's name - you don't need to specify the year. Just "Aaron Judge" works!</p>
+              </div>
+
+              <div className="how-to-section">
+                <h3>🔥 Streaks</h3>
+                <p>Win consecutive days to build your streak!</p>
+              </div>
+
+              <button className="modal-button primary" onClick={() => setShowHowToPlay(false)}>
+                Let's Play!
+              </button>
             </div>
           </div>
         )}

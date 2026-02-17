@@ -33,6 +33,34 @@ body {
   color: #1a1a1a;
 }
 
+/* Header Right Section */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.how-to-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.how-to-button:hover {
+  background: #000;
+  transform: scale(1.1);
+}
+
 .streak-counter {
   font-size: 14px;
   color: #666;
@@ -86,6 +114,26 @@ body {
 .strikeout-counter span {
   margin-right: 8px;
   display: inline-block;
+}
+
+/* Duplicate Error */
+.duplicate-error {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
 /* Clue Grid */
@@ -397,6 +445,174 @@ body {
   margin-top: 8px;
 }
 
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Modal Content */
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+  position: relative;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-content h3 {
+  font-size: 24px;
+  margin-bottom: 16px;
+  color: #1a1a1a;
+}
+
+.modal-content p {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+/* Modal Close Button */
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 32px;
+  color: #999;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+  color: #1a1a1a;
+}
+
+/* Modal Buttons */
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modal-button {
+  flex: 1;
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica', sans-serif;
+}
+
+.modal-button.confirm {
+  background: #dc2626;
+  color: white;
+}
+
+.modal-button.confirm:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.modal-button.cancel {
+  background: #f5f5f5;
+  color: #1a1a1a;
+}
+
+.modal-button.cancel:hover {
+  background: #e5e5e5;
+  transform: translateY(-1px);
+}
+
+.modal-button.primary {
+  width: 100%;
+  background: #1a1a1a;
+  color: white;
+  margin-top: 24px;
+}
+
+.modal-button.primary:hover {
+  background: #000;
+  transform: translateY(-1px);
+}
+
+/* How to Play Modal */
+.modal-content.how-to-play {
+  max-width: 600px;
+}
+
+.modal-content.how-to-play h2 {
+  font-size: 28px;
+  margin-bottom: 24px;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.how-to-section {
+  margin-bottom: 24px;
+}
+
+.how-to-section h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: #1a1a1a;
+}
+
+.how-to-section p {
+  margin-bottom: 8px;
+}
+
+.how-to-section ul {
+  margin-left: 20px;
+  margin-bottom: 0;
+}
+
+.how-to-section li {
+  margin-bottom: 4px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.how-to-section strong {
+  color: #1a1a1a;
+}
+
 /* Mobile Responsive */
 @media (max-width: 640px) {
   .App {
@@ -440,5 +656,18 @@ body {
 
   .win-screen h2 {
     font-size: 24px;
+  }
+
+  .modal-content {
+    padding: 24px;
+    margin: 20px;
+  }
+
+  .modal-buttons {
+    flex-direction: column;
+  }
+
+  .modal-button {
+    width: 100%;
   }
 }
