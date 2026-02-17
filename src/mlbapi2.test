@@ -16,22 +16,16 @@ const seededRandom = (seed) => {
 export const getDailyPlayer = (players) => {
   if (!players || players.length === 0) return null;
   
-  // TEMPORARY OVERRIDE: Force Aaron Judge 2017 (remove tomorrow!)
-  const aaronJudge2018 = players.find(p => 
-    p.name === "Aaron Judge" && p.year === 2018
-  );
-  
-  if (aaronJudge2018) {
-    console.log('🎯 Today\'s player: Aaron Judge 2018 (manual override)');
-    return aaronJudge2018;
-  }
-  
-  // Fallback to random if not found
+  // Get today's date as a seed
   const today = new Date();
   const utcYear = today.getUTCFullYear();
   const utcMonth = today.getUTCMonth();
   const utcDate = today.getUTCDate();
+  
+  // Create a unique seed for today (changes daily, same for everyone)
   const seed = utcYear * 10000 + utcMonth * 100 + utcDate;
+  
+  // Use seeded random to pick a player (same player for everyone today)
   const randomIndex = Math.floor(seededRandom(seed) * players.length);
   
   return players[randomIndex];
@@ -46,6 +40,7 @@ export const getUniquePlayerNames = (players) => {
 
 // Check if a player name matches the mystery player's season
 export const checkGuess = (guessedName, mysteryPlayer, allPlayers) => {
+  // Find if this player name exists with the exact stats of mystery player
   const match = allPlayers.find(p => 
     p.name === guessedName && 
     p.year === mysteryPlayer.year &&
