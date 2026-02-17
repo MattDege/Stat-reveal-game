@@ -23,16 +23,22 @@ function App() {
   const [showHowToPlay, setShowHowToPlay] = useState(false);
 
   // Get today's date string for localStorage key (UTC-based)
-  const getTodayKey = () => {
-    const today = new Date();
-    return `${today.getUTCFullYear()}-${today.getUTCMonth() + 1}-${today.getUTCDate()}`;
-  };
+  const getETDate = (date) => {
+  const etOffset = -5; // -4 during daylight saving
+  return new Date(date.getTime() + (etOffset * 60 * 60 * 1000));
+};
 
-  const getYesterdayKey = () => {
-    const yesterday = new Date();
-    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-    return `${yesterday.getUTCFullYear()}-${yesterday.getUTCMonth() + 1}-${yesterday.getUTCDate()}`;
-  };
+const getTodayKey = () => {
+  const etDate = getETDate(new Date());
+  return `${etDate.getUTCFullYear()}-${etDate.getUTCMonth() + 1}-${etDate.getUTCDate()}`;
+};
+
+const getYesterdayKey = () => {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const etDate = getETDate(yesterday);
+  return `${etDate.getUTCFullYear()}-${etDate.getUTCMonth() + 1}-${etDate.getUTCDate()}`;
+};
 
   const updateStreak = (won) => {
     const currentStreak = parseInt(localStorage.getItem('streak') || '0');

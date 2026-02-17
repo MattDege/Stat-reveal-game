@@ -15,14 +15,35 @@ const seededRandom = (seed) => {
 // Get daily player based on UTC date with RANDOM selection
 export const getDailyPlayer = (players) => {
   if (!players || players.length === 0) return null;
+
+  // TEMPORARY OVERRIDE: Force Aaron Judge 2017 (remove tomorrow!)
+  const aaronJudge2017 = players.find(p => 
+    p.name === "Aaron Judge" && p.year === 2017
+  );
   
+  if (aaronJudge2017) {
+    console.log('🎯 Today\'s player: Aaron Judge 2017 (manual override)');
+    return aaronJudge2017;
+  }
+
+  // Use Eastern Time (ET) for daily reset at midnight ET
+  const now = new Date();
   
-  // Fallback to random if not found
-  const today = new Date();
-  const utcYear = today.getUTCFullYear();
-  const utcMonth = today.getUTCMonth();
-  const utcDate = today.getUTCDate();
-  const seed = utcYear * 10000 + utcMonth * 100 + utcDate;
+  // Convert to ET (UTC-5 standard, UTC-4 daylight)
+  const etOffset = -5; // Change to -4 during daylight saving time
+  const etNow = new Date(now.getTime() + (etOffset * 60 * 60 * 1000));
+  
+  const etYear = etNow.getUTCFullYear();
+  const etMonth = etNow.getUTCMonth();
+  const etDate = etNow.getUTCDate();
+  
+  const etStart = new Date(Date.UTC(etYear, 0, 0));
+  const etToday = new Date(Date.UTC(etYear, etMonth, etDate));
+  const diff = etToday - etStart;
+  const oneDay = 1000 * 60 * 60 * 24;
+  const dayOfYear = Math.floor(diff / oneDay);
+  
+  const seed = etYear * 10000 + etMonth * 100 + etDate;
   const randomIndex = Math.floor(seededRandom(seed) * players.length);
   
   return players[randomIndex];
