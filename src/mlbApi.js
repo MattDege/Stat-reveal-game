@@ -6,15 +6,21 @@ export const fetchAllPlayers = async () => {
   return seasonalPlayers;
 };
 
-// Seeded random number generator
-const seededRandom = (seed) => {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
+// Mulberry32 - high quality seeded random number generator
+const mulberry32 = (seed) => {
+  let t = seed + 0x6D2B79F5;
+  t = Math.imul((t ^ (t >>> 15)), (t | 1));
+  t ^= t + Math.imul((t ^ (t >>> 7)), (t | 61));
+  return (((t ^ (t >>> 14)) >>> 0) / 4294967296);
 };
 
-// Convert any date to ET
+// Convert any date to ET (handles DST automatically)
 const getETDate = (date) => {
-  const etOffset = -5; // -4 during daylight saving
+  const jan = new Date(date.getFullYear(), 0, 1);
+  const jul = new Date(date.getFullYear(), 6, 1);
+  const stdOffset = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+  const isDST = date.getTimezoneOffset() < stdOffset;
+  const etOffset = isDST ? -4 : -5;
   return new Date(date.getTime() + (etOffset * 60 * 60 * 1000));
 };
 
@@ -25,12 +31,17 @@ export const getDailyPlayer = (players) => {
   // Get current ET date
   const etNow = getETDate(new Date());
   const etYear = etNow.getUTCFullYear();
-  const etMonth = etNow.getUTCMonth();
+  const etMonth = etNow.getUTCMonth() + 1;
   const etDate = etNow.getUTCDate();
 
-  // Create seed from ET date - same for everyone on same ET day
+  // Create unique seed from ET date
   const seed = etYear * 10000 + etMonth * 100 + etDate;
-  const randomIndex = Math.floor(seededRandom(seed) * players.length);
+  
+  // Use Mulberry32 for high quality randomness
+  const randomValue = mulberry32(seed);
+  const randomIndex = Math.floor(randomValue * players.length);
+
+  console.log(`📅 ET Date: ${etYear}-${etMonth}-${etDate} | Seed: ${seed} | Index: ${randomIndex}`);
 
   return players[randomIndex];
 };

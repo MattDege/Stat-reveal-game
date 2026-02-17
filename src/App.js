@@ -84,10 +84,10 @@ function App() {
       setLoading(true);
 
       // Clean up old UTC-based keys once per user
-      if (!localStorage.getItem('cleanedV2')) {
-        cleanOldKeys();
-        localStorage.setItem('cleanedV2', 'true');
-      }
+      if (!localStorage.getItem('cleanedV3')) {
+  cleanOldKeys();
+  localStorage.setItem('cleanedV3', 'true');
+}
 
       const players = await fetchAllPlayers();
       setAllPlayers(players);
