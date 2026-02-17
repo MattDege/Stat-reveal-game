@@ -16,15 +16,6 @@ const seededRandom = (seed) => {
 export const getDailyPlayer = (players) => {
   if (!players || players.length === 0) return null;
   
-  // TEMPORARY OVERRIDE: Force Aaron Judge 2017 (remove tomorrow!)
-  const aaronJudge2018 = players.find(p => 
-    p.name === "Aaron Judge" && p.year === 2018
-  );
-  
-  if (aaronJudge2018) {
-    console.log('🎯 Today\'s player: Aaron Judge 2018 (manual override)');
-    return aaronJudge2018;
-  }
   
   // Fallback to random if not found
   const today = new Date();
