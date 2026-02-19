@@ -340,7 +340,7 @@ body {
   padding: 12px 24px;
   font-size: 15px;
   font-weight: 500;
-  background: #31faaa;
+  background: #6ee7b7;
   color: white;
   border: none;
   border-radius: 8px;
@@ -368,6 +368,82 @@ body {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* Mode Toggle - iOS Style */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 16px;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+
+.mode-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+}
+
+.mode-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 32px;
+}
+
+.mode-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.mode-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #1a1a1a;
+  transition: 0.3s;
+  border-radius: 32px;
+}
+
+.mode-slider:before {
+  position: absolute;
+  content: "";
+  height: 24px;
+  width: 24px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .mode-slider {
+  background-color: #dc2626;
+}
+
+input:checked + .mode-slider:before {
+  transform: translateX(28px);
+}
+
+.mode-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  min-width: 120px;
+}
+
+.mode-text.active {
+  color: #1a1a1a;
+  font-weight: 600;
 }
 
 /* Win Screen - Minimalist */
@@ -651,6 +727,25 @@ body {
     width: 100%;
   }
 
+  /* MODE TOGGLE MOBILE FIX */
+  .mode-toggle {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .mode-text {
+    font-size: 14px;
+    text-align: center;
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .mode-switch {
+    align-self: center;
+    margin: 0;
+  }
+
   .win-screen {
     padding: 32px 24px;
   }
@@ -671,92 +766,4 @@ body {
   .modal-button {
     width: 100%;
   }
-}
-
-/* Mode Toggle - iOS Style */
-.mode-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding: 16px;
-  background: white;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-}
-
-.mode-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #666;
-}
-
-.mode-switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 32px;
-}
-
-.mode-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.mode-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #1a1a1a;
-  transition: 0.3s;
-  border-radius: 32px;
-}
-
-.mode-slider:before {
-  position: absolute;
-  content: "";
-  height: 24px;
-  width: 24px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: 0.3s;
-  border-radius: 50%;
-}
-
-input:checked + .mode-slider {
-  background-color: #dc2626;
-}
-
-input:checked + .mode-slider:before {
-  transform: translateX(28px);
-}
-
-.mode-text {
-  font-size: 13px;
-  font-weight: 500;
-  color: #666;
-  min-width: 120px;
-}
-
-.mode-text.active {
-  color: #1a1a1a;
-  font-weight: 600;
-}
-
-@media (max-width: 640px) {
-  .mode-toggle {
-    padding: 12px;
-  }
-}
-
-.app-logo {
-  width: 40px;
-  height: auto;
-  margin-right: 10px;
 }

@@ -292,14 +292,14 @@ function App() {
       emojiPattern = '❌'.repeat(10);
     }
 
-    const shareText = `⚾ Stat Reveal Game${modeLabel}
+    const shareText = `⚾ StatLine Daily${modeLabel}
 Day ${dayOfYear} | Streak: ${streak} 🔥
 
 ${gameWon ? `✅ Solved in ${guesses.length}/10` : '❌ Failed'}
 ${emojiPattern}
 ${hintsUsed > 0 ? `💡 Hints used: ${hintsUsed}` : ''}
 
-Play at: https://statrevealgame.com`;
+Play at: https://statlinedaily.com`;
 
     navigator.clipboard.writeText(shareText).then(() => {
       const button = document.querySelector('.share-button');
@@ -337,7 +337,7 @@ Play at: https://statrevealgame.com`;
   return (
     <div className="App">
       <header className="game-header">
-        <h1>⚾ Stat Reveal Game</h1>
+        <h1>⚾ StatLine Daily</h1>
         <div className="header-right">
           <button className="how-to-button" onClick={() => setShowHowToPlay(true)}>
             ?
