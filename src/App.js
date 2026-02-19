@@ -292,14 +292,16 @@ function App() {
       emojiPattern = '❌'.repeat(10);
     }
 
-    const shareText = `⚾ StatLine Daily${modeLabel}
+const shareText = `⚾ StatLine Daily${modeLabel}
 Day ${dayOfYear} | Streak: ${streak} 🔥
 
 ${gameWon ? `✅ Solved in ${guesses.length}/10` : '❌ Failed'}
 ${emojiPattern}
 ${hintsUsed > 0 ? `💡 Hints used: ${hintsUsed}` : ''}
 
-Play at: https://statlinedaily.com`;
+Play at: statlinedaily.com
+https://statlinedaily.com`;
+
 
     navigator.clipboard.writeText(shareText).then(() => {
       const button = document.querySelector('.share-button');
