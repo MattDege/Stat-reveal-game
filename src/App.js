@@ -278,22 +278,22 @@ function App() {
   };
 
   const handleShare = () => {
-    const etNow = getETDate(new Date());
-    const etStart = new Date(Date.UTC(etNow.getUTCFullYear(), 0, 0));
-    const dayOfYear = Math.floor((etNow - etStart) / (1000 * 60 * 60 * 24));
-    const hintsUsed = 2 - hintsRemaining;
-    const modeLabel = gameMode === 'hard' ? ' (HARD MODE)' : '';
+  const etNow = getETDate(new Date());
+  const launchDate = new Date(Date.UTC(2026, 1, 20)); // Month is 0-indexed, so 1 = February
+  const daysSinceLaunch = Math.floor((etNow - launchDate) / (1000 * 60 * 60 * 24)) + 1;
+  const hintsUsed = 2 - hintsRemaining;  // ADD THIS LINE
+  const modeLabel = gameMode === 'hard' ? ' (HARD MODE)' : '';
 
-    // Build the emoji pattern
-    let emojiPattern = '';
-    if (gameWon) {
-      emojiPattern = '❌'.repeat(guesses.length - 1) + '✅';
-    } else {
-      emojiPattern = '❌'.repeat(10);
-    }
+  // Build the emoji pattern
+  let emojiPattern = '';
+  if (gameWon) {
+    emojiPattern = '❌'.repeat(guesses.length - 1) + '✅';
+  } else {
+    emojiPattern = '❌'.repeat(10);
+  }
 
-const shareText = `⚾ StatLine Daily${modeLabel}
-Day ${dayOfYear} | Streak: ${streak} 🔥
+  const shareText = `⚾ StatLine Daily${modeLabel}
+Day ${daysSinceLaunch} | Streak: ${streak} 🔥
 
 ${gameWon ? `✅ Solved in ${guesses.length}/10` : '❌ Failed'}
 ${emojiPattern}
@@ -301,19 +301,18 @@ ${hintsUsed > 0 ? `💡 Hints used: ${hintsUsed}` : ''}
 
 Play: https://statlinedaily.com`;
 
-
-    navigator.clipboard.writeText(shareText).then(() => {
-      const button = document.querySelector('.share-button');
-      const originalText = button.textContent;
-      button.textContent = '✅ Copied!';
-      setTimeout(() => {
-        button.textContent = originalText;
-      }, 2000);
-    }).catch(err => {
-      console.error('Failed to copy:', err);
-      alert('Failed to copy to clipboard');
-    });
-  };
+  navigator.clipboard.writeText(shareText).then(() => {
+    const button = document.querySelector('.share-button');
+    const originalText = button.textContent;
+    button.textContent = '✅ Copied!';
+    setTimeout(() => {
+      button.textContent = originalText;
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+    alert('Failed to copy to clipboard');
+  });
+};
 
   if (loading) {
     return (
