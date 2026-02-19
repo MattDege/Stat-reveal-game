@@ -5,6 +5,11 @@ const MLB_API_BASE = 'https://statsapi.mlb.com/api/v1';
 const START_YEAR = 1990;
 const END_YEAR = 2025;
 
+// Normalize names - remove accents for deduplication
+const normalizeString = (str) => {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+};
+
 // Team ID to Division mapping
 const TEAM_DIVISIONS = {
   110: { league: 'American League', division: 'AL East', team: 'Baltimore Orioles' },
@@ -142,6 +147,7 @@ const fetchSeasonStats = async (year) => {
           id: `${player.id}-${year}`,
           playerId: player.id,
           name: player.fullName,
+          normalizedName: normalizeString(player.fullName),
           year: year,
           position: position,
           positionGroup: positionGroup,
@@ -150,6 +156,7 @@ const fetchSeasonStats = async (year) => {
           obp: parseFloat(stats.obp || 0).toFixed(3).replace(/^0/, ''),
           rbi: stats.rbi || 0,
           runs: stats.runs || 0,
+          stolenBases: stats.stolenBases || 0,
           allStar: allStar,
           league: teamInfo.league,
           division: teamInfo.division,
@@ -192,6 +199,15 @@ const generateSeasonalPlayers = async () => {
   
   const allStarCount = allPlayers.filter(p => p.allStar).length;
   console.log(`⭐ All-Stars: ${allStarCount} / ${allPlayers.length} (${((allStarCount/allPlayers.length)*100).toFixed(1)}%)`);
+  
+  // Check for duplicate names
+  const nameMap = new Map();
+  allPlayers.forEach(p => {
+    const normalized = p.normalizedName;
+    nameMap.set(normalized, (nameMap.get(normalized) || 0) + 1);
+  });
+  const uniqueNames = nameMap.size;
+  console.log(`👥 Unique players: ${uniqueNames}`);
 };
 
 generateSeasonalPlayers();

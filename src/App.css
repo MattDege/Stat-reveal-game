@@ -340,7 +340,7 @@ body {
   padding: 12px 24px;
   font-size: 15px;
   font-weight: 500;
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: #31faaa;
   color: white;
   border: none;
   border-radius: 8px;
@@ -348,13 +348,14 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica', sans-serif;
   transition: all 0.2s ease;
   white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 2px 4px rgba(110, 231, 183, 0.3);
 }
 
 .hint-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  background: #34d399;
+  color: white;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 8px rgba(110, 231, 183, 0.4);
 }
 
 .hint-button:active:not(:disabled) {
@@ -669,5 +670,87 @@ body {
 
   .modal-button {
     width: 100%;
+  }
+}
+
+/* Mode Toggle - iOS Style */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+
+.mode-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+}
+
+.mode-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 32px;
+}
+
+.mode-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.mode-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #1a1a1a;
+  transition: 0.3s;
+  border-radius: 32px;
+}
+
+.mode-slider:before {
+  position: absolute;
+  content: "";
+  height: 24px;
+  width: 24px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .mode-slider {
+  background-color: #dc2626;
+}
+
+input:checked + .mode-slider:before {
+  transform: translateX(28px);
+}
+
+.mode-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  min-width: 120px;
+}
+
+.mode-text.active {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .mode-toggle {
+    padding: 12px;
   }
 }

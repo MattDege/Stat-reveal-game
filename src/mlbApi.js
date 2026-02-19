@@ -6,6 +6,17 @@ export const fetchAllPlayers = async () => {
   return seasonalPlayers;
 };
 
+// Filter players by mode
+export const filterPlayersByMode = (players, mode) => {
+  if (mode === 'hard') {
+    // Hard mode: 1990-2025 (all players)
+    return players.filter(p => p.year >= 1990 && p.year <= 2025);
+  } else {
+    // Normal mode: 2010-2025
+    return players.filter(p => p.year >= 2010 && p.year <= 2025);
+  }
+};
+
 // Mulberry32 - high quality seeded random number generator
 const mulberry32 = (seed) => {
   let t = seed + 0x6D2B79F5;
@@ -25,8 +36,11 @@ const getETDate = (date) => {
 };
 
 // Get daily player - resets at midnight ET
-export const getDailyPlayer = (players) => {
+export const getDailyPlayer = (players, mode = 'normal') => {
   if (!players || players.length === 0) return null;
+
+  // Filter by mode first
+  const filteredPlayers = filterPlayersByMode(players, mode);
 
   // Get current ET date
   const etNow = getETDate(new Date());
@@ -34,32 +48,51 @@ export const getDailyPlayer = (players) => {
   const etMonth = etNow.getUTCMonth() + 1;
   const etDate = etNow.getUTCDate();
 
-  // Create unique seed from ET date
-  const seed = etYear * 10000 + etMonth * 100 + etDate;
+  // Create unique seed from ET date + mode offset
+  // Different seed for each mode so they get different players
+  const modeOffset = mode === 'hard' ? 5000000 : 0;
+  const seed = etYear * 10000 + etMonth * 100 + etDate + modeOffset;
   
   // Use Mulberry32 for high quality randomness
   const randomValue = mulberry32(seed);
-  const randomIndex = Math.floor(randomValue * players.length);
+  const randomIndex = Math.floor(randomValue * filteredPlayers.length);
 
-  console.log(`📅 ET Date: ${etYear}-${etMonth}-${etDate} | Seed: ${seed} | Index: ${randomIndex}`);
+  console.log(`📅 ${mode.toUpperCase()} Mode | ET Date: ${etYear}-${etMonth}-${etDate} | Seed: ${seed} | Index: ${randomIndex}`);
 
-  return players[randomIndex];
+  return filteredPlayers[randomIndex];
+};
+
+// Normalize string - remove accents
+const normalizeString = (str) => {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 };
 
 // Get unique player names for autocomplete
-export const getUniquePlayerNames = (players) => {
-  const uniqueNames = new Set();
-  players.forEach(p => uniqueNames.add(p.name));
-  return Array.from(uniqueNames).sort();
+export const getUniquePlayerNames = (players, mode = 'normal') => {
+  const filteredPlayers = filterPlayersByMode(players, mode);
+  const nameMap = new Map();
+  
+  filteredPlayers.forEach(p => {
+    const normalized = p.normalizedName || normalizeString(p.name);
+    if (!nameMap.has(normalized)) {
+      nameMap.set(normalized, p.name);
+    }
+  });
+  
+  return Array.from(nameMap.values()).sort();
 };
 
 // Check if a player name matches the mystery player's season
 export const checkGuess = (guessedName, mysteryPlayer, allPlayers) => {
-  const match = allPlayers.find(p => 
-    p.name === guessedName && 
-    p.year === mysteryPlayer.year &&
-    p.homeRuns === mysteryPlayer.homeRuns &&
-    p.avg === mysteryPlayer.avg
-  );
+  const normalizedGuess = normalizeString(guessedName);
+  
+  const match = allPlayers.find(p => {
+    const normalizedPlayer = normalizeString(p.name);
+    return normalizedPlayer === normalizedGuess &&
+           p.year === mysteryPlayer.year &&
+           p.homeRuns === mysteryPlayer.homeRuns &&
+           p.avg === mysteryPlayer.avg;
+  });
+  
   return match !== undefined;
 };

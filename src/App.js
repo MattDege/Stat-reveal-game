@@ -40,6 +40,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   
   // Game state
+  const [gameMode, setGameMode] = useState('normal');
   const [currentClue, setCurrentClue] = useState(1);
   const [guesses, setGuesses] = useState([]);
   const [hintsRemaining, setHintsRemaining] = useState(2);
@@ -49,13 +50,13 @@ function App() {
   const [gameWon, setGameWon] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
   const [streak, setStreak] = useState(0);
-  const [duplicateError, setDuplicateError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [showGiveUpModal, setShowGiveUpModal] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
 
   const updateStreak = (won) => {
-    const currentStreak = parseInt(localStorage.getItem('streak') || '0');
-    const lastPlayedDate = localStorage.getItem('lastPlayedDate');
+    const currentStreak = parseInt(localStorage.getItem(`streak_${gameMode}`) || '0');
+    const lastPlayedDate = localStorage.getItem(`lastPlayedDate_${gameMode}`);
     const todayKey = getTodayKey();
     const yesterdayKey = getYesterdayKey();
     
@@ -73,9 +74,50 @@ function App() {
       newStreak = 0;
     }
     
-    localStorage.setItem('streak', newStreak.toString());
-    localStorage.setItem('lastPlayedDate', todayKey);
+    localStorage.setItem(`streak_${gameMode}`, newStreak.toString());
+    localStorage.setItem(`lastPlayedDate_${gameMode}`, todayKey);
     setStreak(newStreak);
+  };
+
+  const loadGameForMode = (players, mode) => {
+    const names = getUniquePlayerNames(players, mode);
+    setUniqueNames(names);
+    
+    const todaysPlayer = getDailyPlayer(players, mode);
+    setMysteryPlayer(todaysPlayer);
+    
+    const currentStreak = parseInt(localStorage.getItem(`streak_${mode}`) || '0');
+    setStreak(currentStreak);
+    
+    const todayKey = getTodayKey();
+    const savedGame = localStorage.getItem(`game_${todayKey}_${mode}`);
+    
+    if (savedGame) {
+      const gameData = JSON.parse(savedGame);
+      setGameComplete(true);
+      setGameWon(gameData.won);
+      setGuesses(gameData.guesses);
+      setCurrentClue(gameData.currentClue);
+      setHintsRemaining(gameData.hintsRemaining || 0);
+    } else {
+      // Reset game state for new mode
+      setGameComplete(false);
+      setGameWon(false);
+      setGuesses([]);
+      setCurrentClue(1);
+      setHintsRemaining(2);
+    }
+    
+    // Clear input
+    setInputValue('');
+    setErrorMessage('');
+  };
+
+  const handleModeSwitch = (newMode) => {
+    if (newMode === gameMode) return; // Already in this mode
+    
+    setGameMode(newMode);
+    loadGameForMode(allPlayers, newMode);
   };
 
   // Load players and check if today's puzzle is already completed
@@ -84,34 +126,15 @@ function App() {
       setLoading(true);
 
       // Clean up old UTC-based keys once per user
-      if (!localStorage.getItem('cleanedV3')) {
-  cleanOldKeys();
-  localStorage.setItem('cleanedV3', 'true');
-}
+      if (!localStorage.getItem('cleanedV5')) {
+        cleanOldKeys();
+        localStorage.setItem('cleanedV5', 'true');
+      }
 
       const players = await fetchAllPlayers();
       setAllPlayers(players);
       
-      const names = getUniquePlayerNames(players);
-      setUniqueNames(names);
-      
-      const todaysPlayer = getDailyPlayer(players);
-      setMysteryPlayer(todaysPlayer);
-      
-      const currentStreak = parseInt(localStorage.getItem('streak') || '0');
-      setStreak(currentStreak);
-      
-      const todayKey = getTodayKey();
-      const savedGame = localStorage.getItem(`game_${todayKey}`);
-      
-      if (savedGame) {
-        const gameData = JSON.parse(savedGame);
-        setGameComplete(true);
-        setGameWon(gameData.won);
-        setGuesses(gameData.guesses);
-        setCurrentClue(gameData.currentClue);
-        setHintsRemaining(gameData.hintsRemaining || 0);
-      }
+      loadGameForMode(players, gameMode);
       
       setLoading(false);
     };
@@ -145,15 +168,23 @@ function App() {
   const handleGuess = (playerName = inputValue) => {
     if (!playerName || gameComplete || !mysteryPlayer) return;
 
-    // Check if already guessed this player
-    if (guesses.includes(playerName)) {
-      setDuplicateError(true);
-      setTimeout(() => setDuplicateError(false), 2000);
+    // Check if the player name exists in our database
+    if (!uniqueNames.includes(playerName)) {
+      setErrorMessage('⚠️ Player not found in database!');
+      setTimeout(() => setErrorMessage(''), 2000);
       setInputValue('');
       return;
     }
 
-    setDuplicateError(false);
+    // Check if already guessed this player
+    if (guesses.includes(playerName)) {
+      setErrorMessage('⚠️ You already guessed this player!');
+      setTimeout(() => setErrorMessage(''), 2000);
+      setInputValue('');
+      return;
+    }
+
+    setErrorMessage('');
 
     const isCorrect = checkGuess(playerName, mysteryPlayer, allPlayers);
 
@@ -165,7 +196,7 @@ function App() {
       updateStreak(true);
       
       const todayKey = getTodayKey();
-      localStorage.setItem(`game_${todayKey}`, JSON.stringify({
+      localStorage.setItem(`game_${todayKey}_${gameMode}`, JSON.stringify({
         won: true,
         guesses: winningGuesses,
         currentClue: currentClue,
@@ -183,7 +214,7 @@ function App() {
         updateStreak(false);
         
         const todayKey = getTodayKey();
-        localStorage.setItem(`game_${todayKey}`, JSON.stringify({
+        localStorage.setItem(`game_${todayKey}_${gameMode}`, JSON.stringify({
           won: false,
           guesses: newGuesses,
           currentClue: currentClue + 1,
@@ -206,8 +237,14 @@ function App() {
   };
 
   const selectPlayer = (playerName) => {
-    setInputValue(playerName);
     setShowSuggestions(false);
+    setFilteredPlayers([]);
+    setInputValue(playerName);
+    
+    setTimeout(() => {
+      const input = document.querySelector('.player-input');
+      if (input) input.blur();
+    }, 0);
   };
 
   const handleKeyPress = (e) => {
@@ -227,7 +264,7 @@ function App() {
     updateStreak(false);
     
     const todayKey = getTodayKey();
-    localStorage.setItem(`game_${todayKey}`, JSON.stringify({
+    localStorage.setItem(`game_${todayKey}_${gameMode}`, JSON.stringify({
       won: false,
       guesses: guesses,
       currentClue: currentClue,
@@ -244,17 +281,25 @@ function App() {
     const etNow = getETDate(new Date());
     const etStart = new Date(Date.UTC(etNow.getUTCFullYear(), 0, 0));
     const dayOfYear = Math.floor((etNow - etStart) / (1000 * 60 * 60 * 24));
-    const emoji = gameWon ? '🟩' : '🟥';
     const hintsUsed = 2 - hintsRemaining;
+    const modeLabel = gameMode === 'hard' ? ' (HARD MODE)' : '';
 
-    const shareText = `⚾ Stat Reveal Game
+    // Build the emoji pattern
+    let emojiPattern = '';
+    if (gameWon) {
+      emojiPattern = '❌'.repeat(guesses.length - 1) + '✅';
+    } else {
+      emojiPattern = '❌'.repeat(10);
+    }
+
+    const shareText = `⚾ Stat Reveal Game${modeLabel}
 Day ${dayOfYear} | Streak: ${streak} 🔥
 
 ${gameWon ? `✅ Solved in ${guesses.length}/10` : '❌ Failed'}
-${emoji}${'⬜'.repeat(Math.max(0, guesses.length - 1))}${'⬜'.repeat(Math.max(0, 9 - guesses.length))}
+${emojiPattern}
 ${hintsUsed > 0 ? `💡 Hints used: ${hintsUsed}` : ''}
 
-Play at: ${window.location.href}`;
+Play at: https://statrevealgame.com`;
 
     navigator.clipboard.writeText(shareText).then(() => {
       const button = document.querySelector('.share-button');
@@ -322,22 +367,23 @@ Play at: ${window.location.href}`;
           </div>
         )}
 
-        {duplicateError && (
+        {errorMessage && (
           <div className="duplicate-error">
-            ⚠️ You already guessed this player!
+            {errorMessage}
           </div>
         )}
 
         {/* CLUE GRID - 12 TOTAL CLUES */}
         <div className="clue-grid">
+          {/* Always visible - 4 clues */}
           <div className="clue-card">
             <div className="clue-label">Year</div>
             <div className="clue-value">{mysteryPlayer.year}</div>
           </div>
 
           <div className="clue-card">
-            <div className="clue-label">Position Group</div>
-            <div className="clue-value">{mysteryPlayer.positionGroup}</div>
+            <div className="clue-label">Position</div>
+            <div className="clue-value">{mysteryPlayer.position}</div>
           </div>
 
           <div className="clue-card">
@@ -350,59 +396,60 @@ Play at: ${window.location.href}`;
             <div className="clue-value">{mysteryPlayer.homeRuns} HR</div>
           </div>
 
+          {/* Progressive reveals - NEW ORDER */}
           {currentClue >= 2 && (
-            <div className="clue-card revealed">
-              <div className="clue-label">League</div>
-              <div className="clue-value">{mysteryPlayer.league}</div>
-            </div>
-          )}
-
-          {currentClue >= 3 && (
-            <div className="clue-card revealed">
-              <div className="clue-label">Division</div>
-              <div className="clue-value">{mysteryPlayer.division}</div>
-            </div>
-          )}
-
-          {currentClue >= 4 && (
-            <div className="clue-card revealed">
-              <div className="clue-label">All-Star</div>
-              <div className="clue-value">{mysteryPlayer.allStar ? 'Yes ⭐' : 'No'}</div>
-            </div>
-          )}
-
-          {currentClue >= 5 && (
-            <div className="clue-card revealed">
-              <div className="clue-label">Team</div>
-              <div className="clue-value">{mysteryPlayer.team}</div>
-            </div>
-          )}
-
-          {currentClue >= 6 && (
-            <div className="clue-card revealed">
-              <div className="clue-label">OBP</div>
-              <div className="clue-value">{mysteryPlayer.obp}</div>
-            </div>
-          )}
-
-          {currentClue >= 7 && (
             <div className="clue-card revealed">
               <div className="clue-label">RBI</div>
               <div className="clue-value">{mysteryPlayer.rbi}</div>
             </div>
           )}
 
+          {currentClue >= 3 && (
+            <div className="clue-card revealed">
+              <div className="clue-label">OBP</div>
+              <div className="clue-value">{mysteryPlayer.obp}</div>
+            </div>
+          )}
+
+          {currentClue >= 4 && (
+            <div className="clue-card revealed">
+              <div className="clue-label">Runs Scored</div>
+              <div className="clue-value">{mysteryPlayer.runs} R</div>
+            </div>
+          )}
+
+          {currentClue >= 5 && (
+            <div className="clue-card revealed">
+              <div className="clue-label">Stolen Bases</div>
+              <div className="clue-value">{mysteryPlayer.stolenBases} SB</div>
+            </div>
+          )}
+
+          {currentClue >= 6 && (
+            <div className="clue-card revealed">
+              <div className="clue-label">All-Star</div>
+              <div className="clue-value">{mysteryPlayer.allStar ? 'Yes ⭐' : 'No'}</div>
+            </div>
+          )}
+
+          {currentClue >= 7 && (
+            <div className="clue-card revealed">
+              <div className="clue-label">League</div>
+              <div className="clue-value">{mysteryPlayer.league}</div>
+            </div>
+          )}
+
           {currentClue >= 8 && (
             <div className="clue-card revealed">
-              <div className="clue-label">Position</div>
-              <div className="clue-value">{mysteryPlayer.position}</div>
+              <div className="clue-label">Division</div>
+              <div className="clue-value">{mysteryPlayer.division}</div>
             </div>
           )}
 
           {currentClue >= 9 && (
             <div className="clue-card revealed">
-              <div className="clue-label">Runs Scored</div>
-              <div className="clue-value">{mysteryPlayer.runs} R</div>
+              <div className="clue-label">Team</div>
+              <div className="clue-value">{mysteryPlayer.team}</div>
             </div>
           )}
         </div>
@@ -415,6 +462,7 @@ Play at: ${window.location.href}`;
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                 placeholder="Type player name..."
                 className="player-input"
               />
@@ -425,6 +473,7 @@ Play at: ${window.location.href}`;
                     <div
                       key={idx}
                       className="suggestion-item"
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => selectPlayer(name)}
                     >
                       {name}
@@ -456,6 +505,26 @@ Play at: ${window.location.href}`;
                 Get Hint
               </button>
             </div>
+
+            {/* MODE TOGGLE - iOS Style (during game) */}
+            <div className="mode-toggle">
+              <span className={`mode-text ${gameMode === 'normal' ? 'active' : ''}`}>
+                Normal (2010-2025)
+              </span>
+              
+              <label className="mode-switch">
+                <input 
+                  type="checkbox" 
+                  checked={gameMode === 'hard'}
+                  onChange={(e) => handleModeSwitch(e.target.checked ? 'hard' : 'normal')}
+                />
+                <span className="mode-slider"></span>
+              </label>
+              
+              <span className={`mode-text ${gameMode === 'hard' ? 'active' : ''}`}>
+                Hard (1990-2025)
+              </span>
+            </div>
           </div>
         )}
 
@@ -464,13 +533,33 @@ Play at: ${window.location.href}`;
             <img src={mysteryPlayer.image} alt={mysteryPlayer.name} className="player-image" />
             <h2>{mysteryPlayer.name}</h2>
             <p>{mysteryPlayer.year} • {mysteryPlayer.team} • {mysteryPlayer.position}</p>
-            <p className="season-stats">{mysteryPlayer.avg} / {mysteryPlayer.homeRuns} HR / {mysteryPlayer.rbi} RBI / {mysteryPlayer.runs} R</p>
+            <p className="season-stats">{mysteryPlayer.avg} / {mysteryPlayer.homeRuns} HR / {mysteryPlayer.rbi} RBI / {mysteryPlayer.runs} R / {mysteryPlayer.stolenBases} SB</p>
             
             <div className="share-section">
               <button onClick={handleShare} className="share-button">
                 📋 Share Result
               </button>
               <p className="next-game-text">Come back tomorrow for a new player!</p>
+            </div>
+
+            {/* MODE TOGGLE - iOS Style (after game complete) */}
+            <div className="mode-toggle" style={{marginTop: '20px'}}>
+              <span className={`mode-text ${gameMode === 'normal' ? 'active' : ''}`}>
+                Normal (2010-2025)
+              </span>
+              
+              <label className="mode-switch">
+                <input 
+                  type="checkbox" 
+                  checked={gameMode === 'hard'}
+                  onChange={(e) => handleModeSwitch(e.target.checked ? 'hard' : 'normal')}
+                />
+                <span className="mode-slider"></span>
+              </label>
+              
+              <span className={`mode-text ${gameMode === 'hard' ? 'active' : ''}`}>
+                Hard (1990-2025)
+              </span>
             </div>
           </div>
         )}
@@ -506,11 +595,18 @@ Play at: ${window.location.href}`;
               </div>
 
               <div className="how-to-section">
+                <h3>🎮 Game Modes</h3>
+                <p><strong>Normal Mode:</strong> Players from 2010-2025</p>
+                <p><strong>Hard Mode:</strong> Players from 1990-2025</p>
+                <p>Each mode has its own daily player and streak!</p>
+              </div>
+
+              <div className="how-to-section">
                 <h3>📊 Clues</h3>
                 <p>You start with 4 clues:</p>
                 <ul>
                   <li><strong>Year</strong> - The season</li>
-                  <li><strong>Position Group</strong> - OF, INF, C, or DH</li>
+                  <li><strong>Position</strong> - RF, SS, 1B, C, etc.</li>
                   <li><strong>Batting Average</strong></li>
                   <li><strong>Home Runs</strong></li>
                 </ul>
