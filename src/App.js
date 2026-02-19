@@ -279,7 +279,7 @@ function App() {
 
   const handleShare = () => {
   const etNow = getETDate(new Date());
-  const launchDate = new Date(Date.UTC(2026, 1, 20)); // Month is 0-indexed, so 1 = February
+  const launchDate = new Date(Date.UTC(2026, 1, 19)); // Month is 0-indexed, so 1 = February
   const daysSinceLaunch = Math.floor((etNow - launchDate) / (1000 * 60 * 60 * 24)) + 1;
   const hintsUsed = 2 - hintsRemaining;  // ADD THIS LINE
   const modeLabel = gameMode === 'hard' ? ' (HARD MODE)' : '';
