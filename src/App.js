@@ -299,8 +299,7 @@ ${gameWon ? `✅ Solved in ${guesses.length}/10` : '❌ Failed'}
 ${emojiPattern}
 ${hintsUsed > 0 ? `💡 Hints used: ${hintsUsed}` : ''}
 
-Play at: statlinedaily.com
-https://statlinedaily.com`;
+Play: https://statlinedaily.com`;
 
 
     navigator.clipboard.writeText(shareText).then(() => {
