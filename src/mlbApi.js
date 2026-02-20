@@ -15,11 +15,15 @@ export const getAllPlayerNames = () => {
 // Filter players by mode
 export const filterPlayersByMode = (players, mode) => {
   if (mode === 'hard') {
-    // Hard mode: 1990-2025 (all players)
+    // Hard mode: All qualified players (1990-2025)
     return players.filter(p => p.year >= 1990 && p.year <= 2025);
   } else {
-    // Normal mode: 2010-2025
-    return players.filter(p => p.year >= 2010 && p.year <= 2025);
+    // Normal mode: Recent regulars (2010-2025, 400+ PA)
+    return players.filter(p => {
+      const isRecent = p.year >= 2010 && p.year <= 2025;
+      const wasRegular = p.plateAppearances >= 400;
+      return isRecent && wasRegular;
+    });
   }
 };
 
