@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import './App.css';
-import { fetchAllPlayers, getDailyPlayer, getUniquePlayerNames, checkGuess } from './mlbApi';
+import { fetchAllPlayers, getDailyPlayer, getAllPlayerNames, checkGuess } from './mlbApi';
+
 
 // ET date utilities - outside component to avoid dependency issues
 const getETDate = (date) => {
@@ -80,38 +81,39 @@ function App() {
   };
 
   const loadGameForMode = (players, mode) => {
-    const names = getUniquePlayerNames(players, mode);
-    setUniqueNames(names);
-    
-    const todaysPlayer = getDailyPlayer(players, mode);
-    setMysteryPlayer(todaysPlayer);
-    
-    const currentStreak = parseInt(localStorage.getItem(`streak_${mode}`) || '0');
-    setStreak(currentStreak);
-    
-    const todayKey = getTodayKey();
-    const savedGame = localStorage.getItem(`game_${todayKey}_${mode}`);
-    
-    if (savedGame) {
-      const gameData = JSON.parse(savedGame);
-      setGameComplete(true);
-      setGameWon(gameData.won);
-      setGuesses(gameData.guesses);
-      setCurrentClue(gameData.currentClue);
-      setHintsRemaining(gameData.hintsRemaining || 0);
-    } else {
-      // Reset game state for new mode
-      setGameComplete(false);
-      setGameWon(false);
-      setGuesses([]);
-      setCurrentClue(1);
-      setHintsRemaining(2);
-    }
-    
-    // Clear input
-    setInputValue('');
-    setErrorMessage('');
-  };
+  // Use ALL player names for autocomplete (1990-2025)
+  const allNames = getAllPlayerNames();
+  setUniqueNames(allNames);
+  
+  const todaysPlayer = getDailyPlayer(players, mode);
+  setMysteryPlayer(todaysPlayer);
+  
+  const currentStreak = parseInt(localStorage.getItem(`streak_${mode}`) || '0');
+  setStreak(currentStreak);
+  
+  const todayKey = getTodayKey();
+  const savedGame = localStorage.getItem(`game_${todayKey}_${mode}`);
+  
+  if (savedGame) {
+    const gameData = JSON.parse(savedGame);
+    setGameComplete(true);
+    setGameWon(gameData.won);
+    setGuesses(gameData.guesses);
+    setCurrentClue(gameData.currentClue);
+    setHintsRemaining(gameData.hintsRemaining || 0);
+  } else {
+    // Reset game state for new mode
+    setGameComplete(false);
+    setGameWon(false);
+    setGuesses([]);
+    setCurrentClue(1);
+    setHintsRemaining(2);
+  }
+  
+  // Clear input
+  setInputValue('');
+  setErrorMessage('');
+};
 
   const handleModeSwitch = (newMode) => {
     if (newMode === gameMode) return; // Already in this mode

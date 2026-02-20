@@ -1,9 +1,15 @@
 import seasonalPlayers from './seasonalPlayers.json';
+import allPlayerNames from './allPlayerNames.json';
 
 // Get all players from static JSON
 export const fetchAllPlayers = async () => {
   console.log(`✅ Loaded ${seasonalPlayers.length} seasonal players from database`);
   return seasonalPlayers;
+};
+
+// Get ALL player names for autocomplete (no filters)
+export const getAllPlayerNames = () => {
+  return allPlayerNames.players;
 };
 
 // Filter players by mode
@@ -65,21 +71,6 @@ export const getDailyPlayer = (players, mode = 'normal') => {
 // Normalize string - remove accents
 const normalizeString = (str) => {
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-};
-
-// Get unique player names for autocomplete
-export const getUniquePlayerNames = (players, mode = 'normal') => {
-  const filteredPlayers = filterPlayersByMode(players, mode);
-  const nameMap = new Map();
-  
-  filteredPlayers.forEach(p => {
-    const normalized = p.normalizedName || normalizeString(p.name);
-    if (!nameMap.has(normalized)) {
-      nameMap.set(normalized, p.name);
-    }
-  });
-  
-  return Array.from(nameMap.values()).sort();
 };
 
 // Check if a player name matches the mystery player's season
